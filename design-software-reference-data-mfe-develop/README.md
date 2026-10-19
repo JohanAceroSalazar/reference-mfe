@@ -76,10 +76,11 @@ todo pasa por la fachada `design-software-frontend-platform`.
 
 - Configure `VITE_REFERENCE_DATA_API_BASE_URL` con la URL de Reference Data incluyendo `/api/v1`;
   `.env.example` deja el valor vacío y no contiene credenciales.
-- La capa HTTP local usa `fetch` del navegador a través de adaptadores sustituibles en
-  `src/adapter/out/http/`. La plataforma oficial no está disponible en este workspace. El
-  contrato local exige Bearer JWT, por lo que la autenticación y RBAC siguen pendientes; un
-  `401`/`403` se muestra como error HTTP y las acciones de escritura permanecen deshabilitadas.
+- The HTTP adapters use `HttpClient` from `@sena/frontend-platform`. It reads the same
+  `sena.access_token` session token as the Web Shell and sends it as a Bearer token; Reference
+  Data does not create, store, or bypass JWTs. A local IAM session and a reachable JWKS endpoint
+  are still required before protected backend calls can succeed. `401` and `403` responses remain
+  visible as HTTP errors.
 - `reference-data.yaml` disponible en `design-software-docs` está en revisión general. Los DTO
   locales son proyecciones tipadas para preparar esa integración, no tipos generados ni evidencia
   de contrato aprobado. Sustituirlos por generación reproducible cuando se publique la fuente

@@ -1,9 +1,4 @@
-export interface ApiErrorBody {
-  error?: {
-    code?: string;
-    message?: string;
-  };
-}
+import { HttpClient, HttpError } from '@sena/frontend-platform';
 
 export class ReferenceDataHttpError extends Error {
   constructor(
@@ -26,6 +21,27 @@ export class MissingReferenceDataConfigurationError extends Error {
 const baseUrlWithSlash = (baseUrl: string): string =>
   baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
 
+const clients = new Map<string, HttpClient>();
+
+const clientFor = (baseUrl: string): HttpClient => {
+  const normalizedBaseUrl = baseUrl.trim().replace(/\/$/, '');
+  if (!normalizedBaseUrl) throw new MissingReferenceDataConfigurationError();
+  const cached = clients.get(normalizedBaseUrl);
+  if (cached) return cached;
+
+  // The shell and other authenticated frontends keep the session token here.
+  // HttpClient is the shared component responsible for its Bearer header.
+  const client = new HttpClient({
+    baseUrl: normalizedBaseUrl,
+    tokenProvider: {
+      getAccessToken: () => sessionStorage.getItem('sena.access_token'),
+      clear: () => sessionStorage.removeItem('sena.access_token'),
+    },
+  });
+  clients.set(normalizedBaseUrl, client);
+  return client;
+};
+
 export const buildReferenceDataUrl = (baseUrl: string, path: string): URL => {
   const normalizedBaseUrl = baseUrl.trim();
   if (!normalizedBaseUrl) throw new MissingReferenceDataConfigurationError();
@@ -37,41 +53,18 @@ export async function requestReferenceData<T>(
   path: string,
   init: RequestInit = {},
 ): Promise<T> {
-  const url = buildReferenceDataUrl(baseUrl, path);
-  let response: Response;
   try {
-    response = await fetch(url, {
-      ...init,
-      headers: {
-        Accept: 'application/json',
-        ...(init.body ? { 'Content-Type': 'application/json' } : {}),
-        ...init.headers,
-      },
-    });
+    return await clientFor(baseUrl).request<T>(`/${path.replace(/^\//, '')}`, init);
   } catch (error) {
+    if (error instanceof HttpError) {
+      throw new ReferenceDataHttpError(error.message, error.status, error.code);
+    }
     if (error instanceof Error && error.name === 'AbortError') throw error;
     throw new Error(
       'No fue posible conectar con Reference Data. Verifica la conexión e intenta nuevamente.',
       { cause: error },
     );
   }
-
-  if (!response.ok) {
-    let body: ApiErrorBody | undefined;
-    try {
-      body = (await response.json()) as ApiErrorBody;
-    } catch {
-      body = undefined;
-    }
-    throw new ReferenceDataHttpError(
-      body?.error?.message ?? `La solicitud falló (HTTP ${response.status}).`,
-      response.status,
-      body?.error?.code,
-    );
-  }
-
-  if (response.status === 204) return undefined as T;
-  return (await response.json()) as T;
 }
 
 export const jsonBody = (body: unknown): string => JSON.stringify(body);

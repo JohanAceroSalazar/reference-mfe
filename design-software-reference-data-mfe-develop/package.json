@@ -10,9 +10,11 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:pact": "vitest run tests/pact",
     "lint": "eslint ."
   },
   "dependencies": {
+    "@sena/frontend-platform": "file:../design-software-frontend-platform-develop",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.30.1"
@@ -20,6 +22,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@module-federation/vite": "^1.23.0",
+    "@pact-foundation/pact": "^16.0.2",
     "@testing-library/react": "^16.3.3",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",

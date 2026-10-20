@@ -1,8 +1,13 @@
 import { federation } from '@module-federation/vite';
 import react from '@vitejs/plugin-react';
+import { loadEnv } from 'vite';
 import { defineConfig } from 'vitest/config';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+  const referenceDataTarget = env.REFERENCE_DATA_API_PROXY_TARGET || 'http://localhost:18080';
+
+  return {
   plugins: [
     react(),
     federation({
@@ -22,6 +27,13 @@ export default defineConfig({
   ],
   server: {
     port: 5105,
+    proxy: {
+      '/api/v1': {
+        target: referenceDataTarget,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/v1/, ''),
+      },
+    },
   },
   test: {
     environment: 'jsdom',
@@ -30,4 +42,5 @@ export default defineConfig({
     // resource contention and makes the standard npm test command stable.
     maxWorkers: 1,
   },
+  };
 });

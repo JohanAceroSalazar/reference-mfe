@@ -14,7 +14,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@sena/frontend-platform": "file:../design-software-frontend-platform-develop",
+    "@sena/frontend-platform": "file:../../platform/design-software-frontend-platform-develop",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.30.1"
